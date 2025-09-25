@@ -1,0 +1,30 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart service
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    state: restarted
+  when: service_auto_restart | default(true)
+
+- name: Start service
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    state: started
+
+- name: Stop service
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    state: stopped
+
+- name: Enable service
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    enabled: true
+
+- name: Disable service
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    enabled: false

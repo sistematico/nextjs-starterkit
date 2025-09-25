@@ -1,0 +1,36 @@
+- name: Criar serviço systemd a partir do template
+  ansible.builtin.template:
+    src: service.j2
+    dest: "/etc/systemd/system/{{ service_name | default(domain_name) }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify:
+    - reload systemd
+    - restart service
+
+- name: Criar diretório /etc/sudoers.d
+  ansible.builtin.file:
+    path: /etc/sudoers.d
+    state: directory
+    mode: "0750"
+
+- name: Habilitar usuário para gerenciar o serviço sem necessidade de senha ({{ service_user | default('nginx') }})
+  community.general.sudoers:
+    name: "{{ service_sudoers_name | default(domain_name | replace('.', '_')) }}"
+    user: "{{ service_user | default('nginx') }}"
+    commands:
+      - "/usr/bin/systemctl stop {{ service_name | default(domain_name) }}.service"
+      - "/usr/bin/systemctl start {{ service_name | default(domain_name) }}.service"
+      - "/usr/bin/systemctl restart {{ service_name | default(domain_name) }}.service"
+      - "/usr/bin/systemctl status {{ service_name | default(domain_name) }}.service"
+      - "/usr/bin/systemctl reload {{ service_name | default(domain_name) }}.service"
+    nopassword: true
+
+- name: Habilitar e iniciar o serviço systemd
+  ansible.builtin.systemd:
+    name: "{{ service_name | default(domain_name) }}.service"
+    state: "{{ service_initial_state | default('started') }}"
+    enabled: "{{ service_enabled | default(true) }}"
+    daemon_reload: true

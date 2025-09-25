@@ -1,0 +1,55 @@
+[Unit]
+Description={{ service_description | default(domain_name + ' Service') }}
+After={{ service_after | default('network.target') }}
+
+[Service]
+Type={{ service_type | default('simple') }}
+User={{ service_user | default('nginx') }}
+Group={{ service_group | default(service_user | default('nginx')) }}
+Environment={{ service_environment | default('NODE_ENV=production') }}
+WorkingDirectory={{ service_working_directory | default('/var/www/' + domain_name) }}
+ExecStart={{ service_exec_start | default('/home/' + (service_user | default('nginx')) + '/.bun/bin/bun run start') }}
+ExecStop={{ service_exec_stop | default('/usr/bin/kill -TERM $MAINPID') }}
+Restart={{ service_restart | default('always') }}
+RestartSec={{ service_restart_sec | default('10s') }}
+{% if service_start_limit_interval_sec is defined -%}
+StartLimitIntervalSec={{ service_start_limit_interval_sec }}
+{% endif -%}
+{% if service_start_limit_burst is defined -%}
+StartLimitBurst={{ service_start_limit_burst }}
+{% endif -%}
+
+{% if service_memory_accounting | default(false) -%}
+# Limites de memória
+MemoryAccounting={{ service_memory_accounting | lower }}
+{% if service_memory_high is defined -%}
+MemoryHigh={{ service_memory_high }}
+{% endif -%}
+{% if service_memory_max is defined -%}
+MemoryMax={{ service_memory_max }}
+{% endif -%}
+{% endif -%}
+
+# Limites de sistema
+LimitNOFILE={{ service_limit_nofile | default('65535') }}
+LimitNPROC={{ service_limit_nproc | default('2048') }}
+
+# Configurações de segurança
+{% if service_security_no_new_privileges | default(true) -%}
+NoNewPrivileges={{ service_security_no_new_privileges | lower }}
+{% endif -%}
+{% if service_security_private_tmp | default(true) -%}
+PrivateTmp={{ service_security_private_tmp | lower }}
+{% endif -%}
+{% if service_security_protect_system is defined -%}
+ProtectSystem={{ service_security_protect_system }}
+{% endif -%}
+{% if service_security_protect_home | default(false) -%}
+ProtectHome={{ service_security_protect_home | lower }}
+{% endif -%}
+{% if service_security_read_only_paths is defined -%}
+ReadOnlyPaths={{ service_security_read_only_paths }}
+{% endif -%}
+
+[Install]
+WantedBy={{ service_wants | default('multi-user.target') }}
